@@ -1,0 +1,1 @@
+Bu klasöre cicek-1.png, cicek-2.png, cicek-3.png ve cicek-4.png dosyalarını yükle.
