@@ -15,25 +15,55 @@ window.BIRTHDAY_CONFIG = {
   ],
   familyPhoto: "assets/images/aile-fotografi.jpg",
   memories: [
-    { image: "assets/images/fotograf-01.jpg", title: "İyi ki hayatımızın içindesin.", text: "Buraya ilk fotoğrafla ilgili kısa bir anını yaz.", note: "İlk hatıramız ✦" },
-    { image: "assets/images/fotograf-02.jpg", title: "Her evin görünmeyen bir ışığı vardır.", text: "Bu alanı fotoğrafın hissine göre değiştirebilirsin.", note: "Birlikte güldüğümüz günlerden" },
-    { image: "assets/images/fotograf-03.jpg", title: "Bazı anılar eskimez.", text: "Buraya birlikte yaşadığınız özel bir anıyı ekleyebilirsin.", note: "Sadece bizim anlayacağımız bir cümle" },
-    { image: "assets/images/fotograf-04.jpg", title: "Kahkahanın olduğu yerde ev vardır.", text: "Kısa, samimi ve fotoğrafa ait bir cümle burada güzel durur.", note: "Bu karenin perde arkası" },
-    { image: "assets/images/fotograf-05.jpg", title: "Seninle her şey biraz daha güzel.", text: "Ablanın emeğinden, karakterinden veya aileye kattığı güzellikten bahset.", note: "Güçlü, zarif ve biraz inatçı" },
-    { image: "assets/images/fotograf-06.jpg", title: "İyi ki ablamızsın.", text: "Buraya ailece söylemek istediğiniz küçük bir teşekkür yazabilirsin.", note: "İyi ki varsın" },
-    { image: "assets/images/fotograf-07.jpg", title: "Yeni yaşın sana çok yakışsın.", text: "Son fotoğrafta yeni yaş dileklerini yazabilirsin.", note: "Daha nice güzel yaşlara" }
+    {
+      image: "assets/images/fotograf-01.jpg",
+      title: "İlk kışlarımızdan biri.",
+      text: "İlk kartoplarımızdan biriydi. Üşüdüğümüzü bile unutup ne kadar eğlendiğimiz hâlâ aklımda.",
+      note: "Karın içindeki kahkahamız"
+    },
+    {
+      image: "assets/images/fotograf-02.jpg",
+      title: "Seninle güldüğüm ilk anlardan.",
+      text: "Daha küçücükken bile beni güldürmenin bir yolunu buluyordun. Bu kare, birlikte biriktirdiğimiz kahkahaların başlangıcı gibi.",
+      note: "İlk kahkahalarımızdan biri"
+    },
+    {
+      image: "assets/images/fotograf-05.jpg",
+      title: "İlk yolculuk heyecanımda sen vardın.",
+      text: "Uçağa binmeden önceki o büyük heyecanımı seninle paylaşmıştım. Bilmediğim bir yere giderken yanımda olman bana güven vermişti.",
+      note: "Yolculuk başlamadan önce"
+    },
+    {
+      image: "assets/images/fotograf-04.jpg",
+      title: "Her yaşımda bir izin var.",
+      text: "Doğum günlerimde, kalabalığın içinde ve en güzel anlarımda hep sen vardın. Çocukluğum seninle daha güzel geçti.",
+      note: "Birlikte büyüdüğümüz günler"
+    },
+    {
+      image: "assets/images/fotograf-03.jpg",
+      title: "Ben büyürken hep yanımdaydın.",
+      text: "Heyecanlandığımda, korktuğumda ya da sadece gülmek istediğimde yanımda sen vardın. Çocukluğumun en güzel yerlerinde hep sen varsın.",
+      note: "Yanımda olduğun yıllar"
+    },
+    {
+      image: "assets/images/fotograf-06.jpg",
+      title: "Beni büyüten sevgilerden birisin.",
+      text: "Ben daha hiçbir şeyi hatırlayamazken bile yanımdaydın. Bana ablalığın ne demek olduğunu yıllar boyunca hep hissettirdin.",
+      note: "Daha küçücükken bile"
+    },
+    {
+      image: "assets/images/fotograf-07.jpg",
+      title: "İlklerimin çoğunda sen vardın.",
+      text: "İlk banyolarımdan birini bana sen yaptırmıştın. O günü ben hatırlamasam da bu fotoğraf, sevgini yıllar öncesinden anlatıyor.",
+      note: "İlk banyolarımdan biri"
+    }
   ]
 };
 
-/*
-  Açılış sahnesi düzeltmesi:
-  Bu kod, index.html içindeki eski açılış tıklamasını devralır ve sahneleri
-  birbirinden bağımsız, atlanamayan adımlar halinde oynatır.
-*/
 setTimeout(() => {
-  const config = window.BIRTHDAY_CONFIG;
-  const $ = (selector) => document.querySelector(selector);
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const C = window.BIRTHDAY_CONFIG;
+  const $ = (s) => document.querySelector(s);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const player = $('#player');
   const playButton = $('#play');
@@ -52,14 +82,19 @@ setTimeout(() => {
   const ambientAudio = $('#ambientAudio');
   const confettiAudio = $('#confettiAudio');
 
+  const familyText = document.querySelector('.familyInner > div:last-child > p:last-child');
+  if (familyText) {
+    familyText.textContent = 'Çocukluğumuzun, kahkahalarımızın ve en güzel anlarımızın içinde hep sen varsın. İyi ki bizimlesin, iyi ki ablamızsın.';
+  }
+
   if (!playButton || !flowersLayer || !prompt || !reveal) return;
 
   let stage = 'idle';
-  let motionProgress = 0;
+  let motion = 0;
   let lastMouseX = 0;
   let lastMouseTime = 0;
   let lastTouchX = 0;
-  let revealSequenceRunning = false;
+  let sequenceRunning = false;
 
   const safePlay = (audio, volume) => {
     if (!audio) return;
@@ -69,79 +104,77 @@ setTimeout(() => {
 
   const fadeAudio = (audio, target, duration = 800) => {
     if (!audio) return;
-    const startVolume = audio.volume;
-    const startedAt = performance.now();
-
-    const tick = (now) => {
-      const ratio = Math.min(1, (now - startedAt) / duration);
-      audio.volume = startVolume + (target - startVolume) * ratio;
-      if (ratio < 1) requestAnimationFrame(tick);
+    const start = audio.volume;
+    const begin = performance.now();
+    const frame = (now) => {
+      const ratio = Math.min(1, (now - begin) / duration);
+      audio.volume = start + (target - start) * ratio;
+      if (ratio < 1) requestAnimationFrame(frame);
     };
-
-    requestAnimationFrame(tick);
+    requestAnimationFrame(frame);
   };
 
-  const makeDenseFlowerCover = () => {
+  const createFlowerCover = () => {
     flowersLayer.innerHTML = '';
-
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = innerWidth;
+    const height = innerHeight;
     const spacing = width <= 600 ? 42 : 56;
-    const flowerSize = Math.ceil(spacing * 1.55);
-    const columns = Math.ceil(width / spacing) + 3;
+    const size = Math.ceil(spacing * 1.55);
+    const cols = Math.ceil(width / spacing) + 3;
     const rows = Math.ceil(height / spacing) + 3;
     const emojis = ['🌸', '🌺', '🌼', '🌷', '💮'];
-    let longestAnimation = 0;
-    let flowerIndex = 0;
+    let longest = 0;
+    let index = 0;
 
-    for (let row = 0; row < rows; row += 1) {
-      for (let column = 0; column < columns; column += 1) {
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
         const flower = document.createElement('div');
         const duration = 2600 + Math.random() * 1200;
         const delay = Math.random() * 1700;
-        const left = column * spacing - spacing + (Math.random() * 14 - 7);
-        const landingTop = row * spacing - spacing + (Math.random() * 14 - 7);
+        const left = col * spacing - spacing + (Math.random() * 14 - 7);
+        const top = row * spacing - spacing + (Math.random() * 14 - 7);
+        const fallback = emojis[index % emojis.length];
+        longest = Math.max(longest, duration + delay);
 
-        longestAnimation = Math.max(longestAnimation, duration + delay);
         flower.className = 'flower';
         flower.style.cssText = [
           `left:${left}px`,
-          `width:${flowerSize}px`,
-          `height:${flowerSize}px`,
-          `font-size:${Math.round(flowerSize * 0.84)}px`,
+          `width:${size}px`,
+          `height:${size}px`,
+          `font-size:${Math.round(size * 0.84)}px`,
           `--fall:${duration}ms`,
-          `--end:${landingTop}px`,
+          `--end:${top}px`,
           `--rot:${Math.random() * 180 - 90}deg`,
           `animation-delay:${delay}ms`,
           `z-index:${1 + Math.floor(Math.random() * 5)}`
         ].join(';');
 
-        const path = config.flowers?.[flowerIndex % (config.flowers?.length || 1)];
+        const path = C.flowers?.[index % (C.flowers?.length || 1)];
         if (path) {
           const image = new Image();
           image.src = path;
           image.alt = '';
           image.onerror = () => {
-            flower.textContent = emojis[flowerIndex % emojis.length];
+            flower.innerHTML = '';
+            flower.textContent = fallback;
           };
           flower.append(image);
         } else {
-          flower.textContent = emojis[flowerIndex % emojis.length];
+          flower.textContent = fallback;
         }
 
         flowersLayer.append(flower);
-        flowerIndex += 1;
+        index++;
       }
     }
 
-    return longestAnimation + 450;
+    return longest + 450;
   };
 
-  const makeConfettiBurst = (pieceCount = 34, playSound = false) => {
+  const makeConfettiBurst = (count = 30, playSound = false) => {
     if (playSound) safePlay(confettiAudio, 0.9);
-
     for (const side of [0, 1]) {
-      for (let index = 0; index < pieceCount; index += 1) {
+      for (let i = 0; i < count; i++) {
         const piece = document.createElement('i');
         piece.className = 'piece';
         piece.style.cssText = [
@@ -159,59 +192,51 @@ setTimeout(() => {
   };
 
   const playConfettiSequence = async () => {
-    const burstTimes = [0, 600, 1200, 1800, 2400, 3000];
-    burstTimes.forEach((delay, index) => {
-      setTimeout(() => makeConfettiBurst(30, index === 0), delay);
+    [0, 600, 1200, 1800, 2400, 3000].forEach((delay, i) => {
+      setTimeout(() => makeConfettiBurst(30, i === 0), delay);
     });
     await sleep(3800);
   };
 
-  const sweepOnlyFlowers = async () => {
+  const sweepFlowers = async () => {
     const flowers = [...flowersLayer.querySelectorAll('.flower')];
-    const screenMiddle = window.innerWidth / 2;
+    const middle = innerWidth / 2;
 
-    flowers.forEach((flower, index) => {
+    flowers.forEach((flower, i) => {
       const box = flower.getBoundingClientRect();
-      const direction = box.left + box.width / 2 < screenMiddle ? -1 : 1;
-      const sweepX = direction * (90 + Math.random() * 110);
-      const sweepY = -30 + Math.random() * 160;
-
-      flower.style.setProperty('--sx', `${sweepX}vw`);
-      flower.style.setProperty('--sy', `${sweepY}vh`);
-      setTimeout(() => flower.classList.add('sweep'), Math.min(320, index * 2));
+      const direction = box.left + box.width / 2 < middle ? -1 : 1;
+      flower.style.setProperty('--sx', `${direction * (90 + Math.random() * 110)}vw`);
+      flower.style.setProperty('--sy', `${-30 + Math.random() * 160}vh`);
+      setTimeout(() => flower.classList.add('sweep'), Math.min(320, i * 2));
     });
 
     await sleep(1250);
     flowersLayer.innerHTML = '';
   };
 
-  const runRevealSequence = async () => {
-    if (revealSequenceRunning) return;
-    revealSequenceRunning = true;
+  const revealSequence = async () => {
+    if (sequenceRunning) return;
+    sequenceRunning = true;
     stage = 'clearing-flowers';
-
     lastMouseX = 0;
     lastMouseTime = 0;
     lastTouchX = 0;
-    motionProgress = 100;
+    motion = 100;
     meter.style.width = '100%';
     confettiLayer.innerHTML = '';
-
     prompt.classList.add('hidden');
     permissionButton?.classList.add('hidden');
 
     await sleep(250);
-    await sweepOnlyFlowers();
+    await sweepFlowers();
 
     stage = 'showing-title';
     fadeAudio(introAudio, 0.06, 700);
     if (birthdayAudio) birthdayAudio.currentTime = 0;
     safePlay(birthdayAudio, 1);
-
     scrollButton?.classList.add('hidden');
     reveal.classList.remove('hidden');
 
-    /* Başlık önce tek başına görünür. Konfeti bundan sonra başlar. */
     await sleep(1800);
 
     stage = 'confetti-show';
@@ -226,70 +251,58 @@ setTimeout(() => {
 
   const addMotion = (amount) => {
     if (stage !== 'awaiting-shake') return;
-
-    motionProgress = Math.min(100, motionProgress + amount);
-    meter.style.width = `${motionProgress}%`;
-
-    if (motionProgress >= 100) {
+    motion = Math.min(100, motion + amount);
+    meter.style.width = `${motion}%`;
+    if (motion >= 100) {
       stage = 'shake-complete';
-      runRevealSequence();
+      revealSequence();
     }
   };
 
   setInterval(() => {
     if (stage !== 'awaiting-shake') return;
-    motionProgress = Math.max(0, motionProgress - 1.1);
-    meter.style.width = `${motionProgress}%`;
+    motion = Math.max(0, motion - 1.1);
+    meter.style.width = `${motion}%`;
   }, 90);
 
-  window.addEventListener('mousemove', (event) => {
+  addEventListener('mousemove', (event) => {
     if (stage !== 'awaiting-shake') return;
     const now = Date.now();
     const movement = Math.abs(event.clientX - lastMouseX);
-
     if (lastMouseTime && now - lastMouseTime < 100 && movement > 15) {
       addMotion(Math.min(14, movement / 3.2));
     }
-
     lastMouseX = event.clientX;
     lastMouseTime = now;
   });
 
-  window.addEventListener('touchmove', (event) => {
+  addEventListener('touchmove', (event) => {
     if (stage !== 'awaiting-shake' || !event.touches[0]) return;
     const currentX = event.touches[0].clientX;
     if (lastTouchX) addMotion(Math.min(14, Math.abs(currentX - lastTouchX) / 2.4));
     lastTouchX = currentX;
   }, { passive: true });
 
-  window.addEventListener('devicemotion', (event) => {
+  addEventListener('devicemotion', (event) => {
     if (stage !== 'awaiting-shake') return;
-    const acceleration = event.accelerationIncludingGravity;
-    if (!acceleration) return;
-
-    const strength = Math.abs(acceleration.x || 0)
-      + Math.abs(acceleration.y || 0)
-      + Math.abs(acceleration.z || 0);
+    const a = event.accelerationIncludingGravity;
+    if (!a) return;
+    const strength = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
     addMotion(Math.min(13, strength / 3.8));
   });
 
-  const enableShakeStage = () => {
-    motionProgress = 0;
+  const enableShake = () => {
+    motion = 0;
     meter.style.width = '0%';
     stage = 'awaiting-shake';
 
-    if (
-      typeof DeviceMotionEvent !== 'undefined'
-      && typeof DeviceMotionEvent.requestPermission === 'function'
-    ) {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
       permissionButton?.classList.remove('hidden');
       permissionButton.onclick = async () => {
         try {
           const result = await DeviceMotionEvent.requestPermission();
           if (result === 'granted') permissionButton.classList.add('hidden');
-        } catch {
-          // Parmakla sağa sola sürükleme yedek kontrol olarak çalışmaya devam eder.
-        }
+        } catch {}
       };
     }
   };
@@ -297,18 +310,16 @@ setTimeout(() => {
   playButton.onclick = async () => {
     if (stage !== 'idle') return;
     stage = 'flowers-falling';
-
     player.classList.add('playing');
     record?.classList.add('spin');
     playButton.disabled = true;
     safePlay(introAudio, 0.7);
     safePlay(ambientAudio, 0);
 
-    const fillDuration = makeDenseFlowerCover();
+    const fillDuration = createFlowerCover();
     await sleep(fillDuration);
-
     player.classList.add('hidden');
     prompt.classList.remove('hidden');
-    enableShakeStage();
+    enableShake();
   };
 }, 0);
