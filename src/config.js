@@ -1,5 +1,5 @@
 window.BIRTHDAY_CONFIG = {
-  personName: "Elif",
+  personName: "Elif ablamm",
   audio: {
     intro: "assets/music/acilis-muzigi.mp3",
     birthday: "assets/music/iyi-ki-dogdun-elif.mp3",
@@ -57,13 +57,18 @@ window.BIRTHDAY_CONFIG = {
       text: "İlk banyolarımdan birini bana sen yaptırmıştın. O günü ben hatırlamasam da bu fotoğraf, sevgini yıllar öncesinden anlatıyor.",
       note: "İlk banyolarımdan biri"
     }
+  ],
+  galleryOnly: [
+    "assets/images/fotograf-08.jpg",
+    "assets/images/fotograf-09.jpg",
+    "assets/images/fotograf-10.jpg"
   ]
 };
 
 setTimeout(() => {
   const C = window.BIRTHDAY_CONFIG;
-  const $ = (s) => document.querySelector(s);
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const $ = (selector) => document.querySelector(selector);
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const player = $('#player');
   const playButton = $('#play');
@@ -76,6 +81,9 @@ setTimeout(() => {
   const story = $('#story');
   const flowersLayer = $('#flowers');
   const confettiLayer = $('#confetti');
+  const gallery = $('#gallery');
+  const galleryGrid = $('#galleryGrid');
+  const galleryButton = $('#galleryBtn');
 
   const introAudio = $('#introAudio');
   const birthdayAudio = $('#birthdayAudio');
@@ -94,7 +102,9 @@ setTimeout(() => {
   let lastMouseX = 0;
   let lastMouseTime = 0;
   let lastTouchX = 0;
+  let lastDeviceVector = null;
   let sequenceRunning = false;
+  let audioHandoffFinished = false;
 
   const safePlay = (audio, volume) => {
     if (!audio) return;
@@ -126,8 +136,8 @@ setTimeout(() => {
     let longest = 0;
     let index = 0;
 
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
         const flower = document.createElement('div');
         const duration = 2600 + Math.random() * 1200;
         const delay = Math.random() * 1700;
@@ -164,7 +174,7 @@ setTimeout(() => {
         }
 
         flowersLayer.append(flower);
-        index++;
+        index += 1;
       }
     }
 
@@ -174,7 +184,7 @@ setTimeout(() => {
   const makeConfettiBurst = (count = 30, playSound = false) => {
     if (playSound) safePlay(confettiAudio, 0.9);
     for (const side of [0, 1]) {
-      for (let i = 0; i < count; i++) {
+      for (let index = 0; index < count; index += 1) {
         const piece = document.createElement('i');
         piece.className = 'piece';
         piece.style.cssText = [
@@ -192,8 +202,8 @@ setTimeout(() => {
   };
 
   const playConfettiSequence = async () => {
-    [0, 600, 1200, 1800, 2400, 3000].forEach((delay, i) => {
-      setTimeout(() => makeConfettiBurst(30, i === 0), delay);
+    [0, 600, 1200, 1800, 2400, 3000].forEach((delay, index) => {
+      setTimeout(() => makeConfettiBurst(30, index === 0), delay);
     });
     await sleep(3800);
   };
@@ -202,12 +212,12 @@ setTimeout(() => {
     const flowers = [...flowersLayer.querySelectorAll('.flower')];
     const middle = innerWidth / 2;
 
-    flowers.forEach((flower, i) => {
+    flowers.forEach((flower, index) => {
       const box = flower.getBoundingClientRect();
       const direction = box.left + box.width / 2 < middle ? -1 : 1;
       flower.style.setProperty('--sx', `${direction * (90 + Math.random() * 110)}vw`);
       flower.style.setProperty('--sy', `${-30 + Math.random() * 160}vh`);
-      setTimeout(() => flower.classList.add('sweep'), Math.min(320, i * 2));
+      setTimeout(() => flower.classList.add('sweep'), Math.min(320, index * 2));
     });
 
     await sleep(1250);
@@ -221,6 +231,7 @@ setTimeout(() => {
     lastMouseX = 0;
     lastMouseTime = 0;
     lastTouchX = 0;
+    lastDeviceVector = null;
     motion = 100;
     meter.style.width = '100%';
     confettiLayer.innerHTML = '';
@@ -261,16 +272,16 @@ setTimeout(() => {
 
   setInterval(() => {
     if (stage !== 'awaiting-shake') return;
-    motion = Math.max(0, motion - 1.1);
+    motion = Math.max(0, motion - 0.55);
     meter.style.width = `${motion}%`;
-  }, 90);
+  }, 100);
 
   addEventListener('mousemove', (event) => {
     if (stage !== 'awaiting-shake') return;
     const now = Date.now();
     const movement = Math.abs(event.clientX - lastMouseX);
-    if (lastMouseTime && now - lastMouseTime < 100 && movement > 15) {
-      addMotion(Math.min(14, movement / 3.2));
+    if (lastMouseTime && now - lastMouseTime < 100 && movement > 22) {
+      addMotion(Math.min(3.5, movement / 13));
     }
     lastMouseX = event.clientX;
     lastMouseTime = now;
@@ -279,20 +290,44 @@ setTimeout(() => {
   addEventListener('touchmove', (event) => {
     if (stage !== 'awaiting-shake' || !event.touches[0]) return;
     const currentX = event.touches[0].clientX;
-    if (lastTouchX) addMotion(Math.min(14, Math.abs(currentX - lastTouchX) / 2.4));
+    if (lastTouchX) {
+      const movement = Math.abs(currentX - lastTouchX);
+      if (movement > 18) addMotion(Math.min(3.5, movement / 10));
+    }
     lastTouchX = currentX;
   }, { passive: true });
 
   addEventListener('devicemotion', (event) => {
     if (stage !== 'awaiting-shake') return;
-    const a = event.accelerationIncludingGravity;
-    if (!a) return;
-    const strength = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
-    addMotion(Math.min(13, strength / 3.8));
+
+    const source = event.acceleration || event.accelerationIncludingGravity;
+    if (!source) return;
+
+    const current = {
+      x: Number(source.x) || 0,
+      y: Number(source.y) || 0,
+      z: Number(source.z) || 0
+    };
+
+    if (!lastDeviceVector) {
+      lastDeviceVector = current;
+      return;
+    }
+
+    const change = Math.abs(current.x - lastDeviceVector.x)
+      + Math.abs(current.y - lastDeviceVector.y)
+      + Math.abs(current.z - lastDeviceVector.z);
+
+    lastDeviceVector = current;
+
+    if (change > 4.5) {
+      addMotion(Math.min(3.2, (change - 4.5) / 4.5));
+    }
   });
 
   const enableShake = () => {
     motion = 0;
+    lastDeviceVector = null;
     meter.style.width = '0%';
     stage = 'awaiting-shake';
 
@@ -322,4 +357,68 @@ setTimeout(() => {
     prompt.classList.remove('hidden');
     enableShake();
   };
+
+  const updateStoryAudio = () => {
+    if (!story || story.classList.contains('hidden')) return;
+
+    const opening = document.querySelector('.opening');
+    const firstMemory = document.querySelector('.memory');
+    if (!opening || !firstMemory || !birthdayAudio || !ambientAudio) return;
+
+    if (audioHandoffFinished) {
+      birthdayAudio.volume = 0;
+      if (!birthdayAudio.paused) birthdayAudio.pause();
+      if (ambientAudio.paused) safePlay(ambientAudio, 0.5);
+      ambientAudio.volume = 0.5;
+      return;
+    }
+
+    const start = opening.offsetTop + innerHeight * 0.12;
+    const end = Math.max(start + 1, firstMemory.offsetTop - innerHeight * 0.18);
+    const progress = Math.max(0, Math.min(1, (scrollY - start) / (end - start)));
+
+    if (ambientAudio.paused) safePlay(ambientAudio, 0);
+    birthdayAudio.volume = Math.max(0, 1 - progress);
+    ambientAudio.volume = Math.min(0.5, progress * 0.5);
+
+    if (progress >= 0.995) {
+      audioHandoffFinished = true;
+      birthdayAudio.volume = 0;
+      birthdayAudio.pause();
+      ambientAudio.volume = 0.5;
+    }
+  };
+
+  addEventListener('scroll', updateStoryAudio, { passive: true });
+
+  const appendGalleryImage = (path, label) => {
+    if (!galleryGrid) return;
+    const image = new Image();
+    image.src = path;
+    image.alt = label;
+    image.onerror = () => {
+      const fallback = document.createElement('div');
+      fallback.className = 'fakePhoto';
+      fallback.textContent = `${label} henüz yüklenmedi`;
+      image.replaceWith(fallback);
+    };
+    galleryGrid.append(image);
+  };
+
+  if (galleryButton && gallery && galleryGrid) {
+    galleryButton.onclick = () => {
+      galleryGrid.innerHTML = '';
+
+      C.memories.forEach((memory, index) => {
+        appendGalleryImage(memory.image, `${index + 1}. fotoğraf`);
+      });
+
+      (C.galleryOnly || []).forEach((path, index) => {
+        appendGalleryImage(path, `${C.memories.length + index + 1}. fotoğraf`);
+      });
+
+      gallery.classList.remove('hidden');
+      document.body.classList.add('locked');
+    };
+  }
 }, 0);
