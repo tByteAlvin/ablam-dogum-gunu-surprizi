@@ -190,8 +190,17 @@ setTimeout(() => {
     revealSequenceRunning = true;
     stage = 'clearing-flowers';
 
+    lastMouseX = 0;
+    lastMouseTime = 0;
+    lastTouchX = 0;
+    motionProgress = 100;
+    meter.style.width = '100%';
+    confettiLayer.innerHTML = '';
+
     prompt.classList.add('hidden');
     permissionButton?.classList.add('hidden');
+
+    await sleep(250);
     await sweepOnlyFlowers();
 
     stage = 'showing-title';
@@ -201,9 +210,12 @@ setTimeout(() => {
 
     scrollButton?.classList.add('hidden');
     reveal.classList.remove('hidden');
-    await sleep(450);
+
+    /* Başlık önce tek başına görünür. Konfeti bundan sonra başlar. */
+    await sleep(1800);
 
     stage = 'confetti-show';
+    confettiLayer.innerHTML = '';
     await playConfettiSequence();
 
     story?.classList.remove('hidden');
