@@ -1,0 +1,1 @@
+Bu klasöre aile-fotografi.jpg ve fotograf-01.jpg ... fotograf-07.jpg dosyalarını yükle.
